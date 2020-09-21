@@ -133,8 +133,14 @@ class SODLoader(Dataset):
     """
     def __init__(self, mode='train', augment_data=False, target_size=256):
         if mode == 'train':
-            self.inp_path = './data/DUTS/DUTS-TR/DUTS-TR-Image'
-            self.out_path = './data/DUTS/DUTS-TR/DUTS-TR-Mask'
+            #self.inp_path = './data/DUTS/DUTS-TR/DUTS-TR-Image'
+            #self.out_path = './data/DUTS/DUTS-TR/DUTS-TR-Mask'
+            
+            # self.inp_path = '../silency/datasets/DUT-OMRON/images'
+            # self.out_path = '../silency/datasets/DUT-OMRON/masks'
+
+            self.inp_path = '../silency/datasets/HKU-IS/images'
+            self.out_path = '../silency/datasets/HKU-IS/masks'
         elif mode == 'test':
             self.inp_path = './data/DUTS/DUTS-TE/DUTS-TE-Image'
             self.out_path = './data/DUTS/DUTS-TE/DUTS-TE-Mask'

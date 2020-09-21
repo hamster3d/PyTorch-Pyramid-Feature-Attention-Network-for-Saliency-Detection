@@ -18,7 +18,7 @@ from src.loss import EdgeSaliencyLoss
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Parameters to train your model.')
-    parser.add_argument('--epochs', default=391, help='Number of epochs to train the model for', type=int)
+    parser.add_argument('--epochs', default=200, help='Number of epochs to train the model for', type=int)
     parser.add_argument('--bs', default=6, help='Batch size', type=int)
     parser.add_argument('--lr', default=0.0004, help='Learning Rate', type=float)
     parser.add_argument('--wd', default=0., help='L2 Weight decay', type=float)
@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument('--log_interval', default=250, help='Logging interval (in #batches)', type=int)
     parser.add_argument('--res_mod', default=None, help='Path to the model to resume from', type=str)
     parser.add_argument('--res_opt', default=None, help='Path to the optimizer to resume from', type=str)
-    parser.add_argument('--use_gpu', default=True, help='Flag to use GPU or not', type=bool)
+    parser.add_argument('--use_gpu', default=False, help='Flag to use GPU or not', type=bool)
     parser.add_argument('--base_save_path', default='./models', help='Base path for the models to be saved', type=str)
     # Hyper-parameters for Loss
     parser.add_argument('--alpha_sal', default=0.7, help='weight for saliency loss', type=float)
@@ -141,21 +141,21 @@ class Engine:
                 # Save the best model
                 if te_mae < best_test_mae:
                     best_test_mae = te_mae
-                    torch.save(mod_chkpt, self.model_path + 'weights/best-model_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
-                               format(epoch, best_test_mae, te_avg_loss))
+                    torch.save(mod_chkpt, os.path.join(self.model_path,'weights/best-model_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
+                               format(epoch, best_test_mae, te_avg_loss)))
                     if self.save_opt:
-                        torch.save(opt_chkpt, self.model_path + 'optimizers/best-opt_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
-                                   format(epoch, best_test_mae, te_avg_loss))
+                        torch.save(opt_chkpt, os.path.join(self.model_path, 'optimizers/best-opt_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
+                                   format(epoch, best_test_mae, te_avg_loss)))
                     print('Best Model Saved !!!\n')
                     continue
                 
                 # Save model at regular intervals
                 if self.save_interval is not None and epoch % self.save_interval == 0:
-                    torch.save(mod_chkpt, self.model_path + 'weights/model_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
-                               format(epoch, te_mae, te_avg_loss))
+                    torch.save(mod_chkpt, os.path.join(self.model_path, 'weights/model_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
+                               format(epoch, te_mae, te_avg_loss)))
                     if self.save_opt:
-                        torch.save(opt_chkpt, self.model_path + 'optimizers/opt_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
-                                   format(epoch, best_test_mae, te_avg_loss))
+                        torch.save(opt_chkpt, os.path.join(self.model_path, 'optimizers/opt_epoch-{:03}_mae-{:.4f}_loss-{:.4f}.pth'.
+                                   format(epoch, best_test_mae, te_avg_loss)))
                     print('Model Saved !!!\n')
                     continue
             print('\n')
