@@ -15,6 +15,8 @@ from src.dataloader import SODLoader
 from src.model import SODModel
 from src.loss import EdgeSaliencyLoss
 
+import time
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Parameters to train your model.')
@@ -100,6 +102,7 @@ class Engine:
         for epoch in range(self.epochs):
             self.model.train()
             for batch_idx, (inp_imgs, gt_masks) in enumerate(self.train_dataloader):
+                t = time.time()
                 inp_imgs = inp_imgs.to(self.device)
                 gt_masks = gt_masks.to(self.device)
 
@@ -111,12 +114,14 @@ class Engine:
                 self.optimizer.step()
 
                 if batch_idx % self.log_interval == 0:
-                    print('TRAIN :: Epoch : {}\tBatch : {}/{} ({:.2f}%)\t\tTot Loss : {:.4f}\tReg : {:.4f}'
+                    print('TRAIN :: Epoch : {}\tBatch : {}/{} ({:.2f}%)\t\tTot Loss : {:.4f}\tReg : {:.4f} \tTime : {:.2f}s'
                           .format(epoch + 1,
                                   batch_idx + 1, len(self.train_dataloader),
                                   (batch_idx + 1) * 100 / len(self.train_dataloader),
                                   loss.item(),
-                                  ca_act_reg))
+                                  ca_act_reg,
+                                  time.time() - t
+                                  ))
 
             # Validation
             if epoch % self.test_interval == 0 or epoch % self.save_interval == 0:
