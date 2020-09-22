@@ -68,7 +68,7 @@ def run_inference(args):
             #cv2.imshow('Generated Saliency Mask', pred_masks_raw)
 
             for im_idx in range(pred_masks_raw.shape[0]):
-                out_path = os.path.join(args.output_folder, str(batch_idx)+"-"+str(im_idx)+"-subject.png")
+                out_path = os.path.join(args.output_folder, str(batch_idx)+"-"+str(im_idx)+"-subject_4.png")
                 print(out_path)
                 cv2.imwrite(out_path, pred_masks_raw[im_idx])
 
@@ -112,5 +112,5 @@ def calculate_mae(args):
 
 if __name__ == '__main__':
     rt_args = parse_arguments()
-    calculate_mae(rt_args)
-    #run_inference(rt_args)
+    #calculate_mae(rt_args)
+    run_inference(rt_args)
