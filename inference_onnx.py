@@ -5,6 +5,29 @@ import onnxruntime as rt
 import os
 import time
 
+
+def normalize_array(arr):
+    normed = arr - np.min(arr)
+    M = np.max(normed)
+    if M == 0:
+        return normed
+    return normed / M
+
+def normalize_batch(arr):
+    # vectorized version of normalize_array
+    # use all axes except the first one which is batch
+    axis = tuple(range(1, len(arr.shape)))
+    normed = arr - np.min(arr, axis=axis, keepdims=True)
+    M = np.max(arr, axis=axis, keepdims=True)
+    # avoid division by zero
+    M[M==0] = 1
+    return normed / M
+
+def soft_sigmoid(x, a=1):
+    # when a=1 this becomes usual sigmoid
+    # use something like a=0.5 to stretch sigmoid
+    return 1/(1 + np.exp(-a*x))
+
 def chunked(arr, chunk_size):
   cur = 0
   while cur < len(arr):
@@ -17,8 +40,14 @@ def array_to_image(arr):
 
 class SubjectDetector():
 
-    def __init__(self, model_path):
+    def __init__(self, model_path,
+                    normalize_output=False,
+                    apply_soft_sigmoid=False,
+                    soft_sigmoid_param=0.5):
         self.model_path = model_path
+        self.normalize_output = normalize_output
+        self.apply_soft_sigmoid = apply_soft_sigmoid
+        self.soft_sigmoid_param = soft_sigmoid_param
         self.sess = rt.InferenceSession(self.model_path)
 
     def _preprocess(self, img_pil):
@@ -56,6 +85,10 @@ class SubjectDetector():
         # remove channel dimension
         r = np.squeeze(result)
         r = r[PH:PH+H, PW:PW+W]
+        if self.apply_soft_sigmoid:
+            r = soft_sigmoid(r, a=self.soft_sigmoid_param)
+        if self.normalize_output:
+            r = normalize_array(r)
         return r
 
     def _postprocess_batch(self, results, W, H):
@@ -65,22 +98,12 @@ class SubjectDetector():
         return [self._postprocess(result, w, h) for w, h, result in zip(W, H, results)]
 
     def _inference(self, x):
-        print("Input tensor shape:", x.shape)
-        # print(sess.get_providers())
-        # input_name = sess.get_inputs()[0].name
-        # print("Input name  :", input_name)
-        # input_shape = sess.get_inputs()[0].shape
-        # print("Input shape :", input_shape)
-        # input_type = sess.get_inputs()[0].type
-        # print("Input type  :", input_type)
-        # print(sess._session_options.log_severity_level)
-        #print("Inference session created")
+        # print("Input tensor shape:", x.shape)
         try:
             result = self.sess.run(None, {"input": x})
-            print("Inference session ended")
+            # print("Inference session ended")
             return result[0]
         except Exception as e:
-            print("ERROR")
             print(str(e))
             return None
 
@@ -98,6 +121,9 @@ def parse_arguments():
     parser.add_argument("output", help="Output folder")
     parser.add_argument("--save_originals", help='Save resized originals in output', action="store_true")
     parser.add_argument("--postfix", default="", help="Postfix for output file", type=str)
+    parser.add_argument('--normalize_mask', action="store_true", help='Normalize the output mask')
+    parser.add_argument('--soft_sigmoid', action="store_true", help='Use soft sigmoid. Use only if the model was converted without final activation')
+    
     # parser.add_argument('--use_gpu', default=False, help='Whether to use GPU or not', type=bool)
 
     return parser.parse_args()
@@ -115,7 +141,10 @@ if __name__ == '__main__':
 
     print(f"Number of files to process: {len(files)}")
 
-    detector = SubjectDetector(args.model_path)
+    detector = SubjectDetector(args.model_path,
+            normalize_output=args.normalize_mask,
+            apply_soft_sigmoid=args.soft_sigmoid,
+            soft_sigmoid_param=0.5)
 
     for batch in chunked(files, 10):
         filenames = []
