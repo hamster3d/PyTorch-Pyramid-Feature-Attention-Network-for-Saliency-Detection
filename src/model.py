@@ -84,9 +84,10 @@ class CPFE(nn.Module):
 
 
 class SODModel(nn.Module):
-    def __init__(self):
+    def __init__(self, last_activation=True):
         super(SODModel, self).__init__()
 
+        self.last_activation = last_activation
         # Load the [partial] VGG-16 model
         self.vgg16 = models.vgg16(pretrained=True).features
 
@@ -164,7 +165,11 @@ class SODModel(nn.Module):
 
         # Fused features
         fused_feats = torch.cat((conv_12_feats, conv_345_feats), dim=1)
-        fused_feats = torch.sigmoid(self.ff_conv_1(fused_feats))
+
+        if self.last_activation:
+            fused_feats = torch.sigmoid(self.ff_conv_1(fused_feats))
+        else:
+            fused_feats = self.ff_conv_1(fused_feats)
 
         return fused_feats, ca_act_reg
 

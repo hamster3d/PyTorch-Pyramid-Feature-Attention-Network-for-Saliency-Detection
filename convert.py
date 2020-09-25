@@ -7,7 +7,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Parameters to convert model to ONNX.')
     parser.add_argument('--output', default='output.onnx', help='Path to onnx model', type=str)
     parser.add_argument('--model_path', default='best-model_epoch-204_mae-0.0505_loss-0.1370.pth', help='Path to model', type=str)
-    parser.add_argument('--use_gpu', default=False, help='Whether to use GPU or not', type=bool)
+    parser.add_argument('--use_gpu', action="store_true", help='Whether to use GPU or not')
+    parser.add_argument('--no_activation', action="store_true", help='Whether to use activation function before output')
 
     return parser.parse_args()
 
@@ -21,7 +22,7 @@ if __name__ == '__main__':
         device = torch.device(device='cpu')
 
     # Load model
-    model = SODModel()
+    model = SODModel(last_activation = not args.no_activation)
     chkpt = torch.load(args.model_path, map_location=device)
     model.load_state_dict(chkpt['model'])
     model.to(device)
